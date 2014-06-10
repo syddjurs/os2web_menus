@@ -10,17 +10,28 @@
 function os2web_menus_menu() {
   $items = array();
 
-  $items['os2web_menus/items'] = array(
+  $items['admin/config/os2web_menus'] = array(
+    'title' => 'OS2Web accesible menus',
+    'page callback' => 'system_admin_menu_block_page',
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+    'access arguments' => array('administer site configuration'),
+  );
+
+  $items['admin/config/os2web_menus/settings'] = array(
+    'title' => 'Menu settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('os2web_menus_general_settings_form'),
+    'access callback' => TRUE,
+  );
+
+  $items['admin/config/os2web_menus/items'] = array(
+    'title' => 'Menu items',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('os2web_menus_items_settings_form'),
     'access callback' => TRUE,
   );
 
-  $items['os2web_menus/settings'] = array(
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('os2web_menus_general_settings_form'),
-    'access callback' => TRUE,
-  );
 
   return $items;
 }
@@ -51,7 +62,8 @@ function os2web_menus_general_settings_form() {
   );
 
   $form['os2web_menus_use_default_js'] = array(
-    '#title' => t('Content of toggle link'),
+    '#title' => t('Use the default javascript for open/closing the menu.'),
+    '#description' => t('If not using the default javascript handler, be sure to create your own from your theme. You can copy and alter the default from the os2web_menus.js file in the module directory.'),
     '#type' => 'checkbox',
     '#default_value' => variable_get('os2web_menus_use_default_js', TRUE),
   );
@@ -67,13 +79,13 @@ function os2web_menus_items_settings_form() {
   $megamenu_settings = variable_get('os2web_menus_settings', array());
   $mini_panels = panels_mini_load_all();
 
+  $mini_panel_options = array('none' => t('None'));
   foreach ($mini_panels as $mini_panel) {
     $mini_panel_options[$mini_panel->name] = $mini_panel->admin_title;
   }
 
   $form = array();
 
-  $id = count($megamenu_settings);
   foreach ($megamenu_settings as $key => $menu_settings) {
     $form[$key] = array(
       '#type' => 'fieldset',
@@ -83,6 +95,7 @@ function os2web_menus_items_settings_form() {
       '#title' => t('Link title'),
       '#type' => 'textfield',
       '#default_value' => $menu_settings['title'],
+      '#required' => TRUE,
     );
 
     $form[$key]['link-' . $key] = array(
@@ -104,6 +117,11 @@ function os2web_menus_items_settings_form() {
     );
   }
 
+  if (empty($megamenu_settings)) {
+    $form['empty'] = array(
+      '#markup' => '<div>' . t('You have not yet added menu items. Add one using the Add item button.') . '</div>',
+    );
+  }
   $form['add'] = array(
     '#type' => 'submit',
     '#value' => t('Add item'),
@@ -199,6 +217,9 @@ function os2web_menus_block_view($delta) {
       $len = count($megamenu_settings);
 
       foreach ($megamenu_settings as $menu) {
+        if (empty($menu['title'])) {
+          continue;
+        }
         $pos = '';
 
         if ($i == 0) {
@@ -209,24 +230,34 @@ function os2web_menus_block_view($delta) {
           $pos = 'last';
         }
 
-        $mini_panel = panels_mini_block_view($menu['minipanel']);
+        if ($menu['minipanel'] === 'none') {
+          $mini_panel = NULL;
+        }
+        else {
+          $mini_panel = panels_mini_block_view($menu['minipanel']);
+        }
         $tag = variable_get('os2web_menus_title_tag', 'h3');
 
-        if (variable_get('os2web_menus_toggle_view', TRUE)) {
+        if (variable_get('os2web_menus_toggle_view', TRUE) && $mini_panel) {
           $toggle_content = variable_get('os2web_menus_toggle_content', '+/-');
           $title = '<' . $tag . '>' .
                    l($menu['title'], $menu['link']) .
                    '</' . $tag . '><a href="#" class="js-megamenu-toggle">' .
                    $toggle_content . '</a>';
         }
-        else {
+        elseif ($mini_panel) {
           $title = '<' . $tag . '><a href="#" class="js-megamenu-toggle">' .
                    $menu['title'] . '</a></' . $tag . '>';
         }
+        else {
+          $title = '<' . $tag . '>' . l($menu['title'], $menu['link']) . '</' . $tag . '>';
+        }
+
+        $mini_panel_content = ($mini_panel !== NULL) ? '<div class="megamenu-panel" style="display:none">' . $mini_panel['content'] . '</div>' : '';
 
         $content .= '<div class="megamenu ' . $menu['minipanel'] . ' ' . $pos . '">' . $title .
-                    '<div class="megamenu-panel" style="display:none">' .
-                    $mini_panel['content'] . '</div></div>';
+                     $mini_panel_content .
+                    '</div>';
         $i++;
       }
 
