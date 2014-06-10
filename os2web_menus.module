@@ -212,10 +212,18 @@ function os2web_menus_block_view($delta) {
       $content = '';
       $megamenu_settings = variable_get('os2web_menus_settings', array());
 
+      $active_trail = menu_get_active_trail();
+      $active_trail_paths = array();
+
+      foreach ($active_trail as $trail) {
+        $active_trail_paths[] = drupal_get_path_alias($trail['href']);
+      }
+
       $i = 0;
       $len = count($megamenu_settings);
 
       foreach ($megamenu_settings as $menu) {
+
         if (empty($menu['title'])) {
           continue;
         }
@@ -237,19 +245,21 @@ function os2web_menus_block_view($delta) {
         }
         $tag = variable_get('os2web_menus_title_tag', 'h3');
 
+        $link_class = in_array(drupal_get_path_alias($menu['link']), $active_trail_paths) ? 'active' : '';
+
         if (variable_get('os2web_menus_toggle_view', TRUE) && $mini_panel) {
           $toggle_content = variable_get('os2web_menus_toggle_content', '+/-');
           $title = '<' . $tag . '>' .
-                   l($menu['title'], $menu['link']) .
+                   l($menu['title'], $menu['link'], array('attributes' => array('class' => array($link_class)))) .
                    '</' . $tag . '><a href="#" class="js-megamenu-toggle">' .
                    $toggle_content . '</a>';
         }
         elseif ($mini_panel) {
-          $title = '<' . $tag . '><a href="#" class="js-megamenu-toggle">' .
+          $title = '<' . $tag . '><a href="#" class="js-megamenu-toggle ' . $link_class . '">' .
                    $menu['title'] . '</a></' . $tag . '>';
         }
         else {
-          $title = '<' . $tag . '>' . l($menu['title'], $menu['link']) . '</' . $tag . '>';
+          $title = '<' . $tag . '>' . l($menu['title'], $menu['link'], array('attributes' => array('class' => array($link_class)))) . '</' . $tag . '>';
         }
 
         $mini_panel_content = ($mini_panel !== NULL) ? '<div class="megamenu-panel" style="display:none">' . $mini_panel['content'] . '</div>' : '';
