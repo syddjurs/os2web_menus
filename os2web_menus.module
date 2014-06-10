@@ -209,7 +209,7 @@ function os2web_menus_block_view($delta) {
 
   switch ($delta) {
     case 'os2web_menus':
-      $content = '';
+      $content = '<ul class="os2web_menus-container">';
       $megamenu_settings = variable_get('os2web_menus_settings', array());
 
       $active_trail = menu_get_active_trail();
@@ -239,6 +239,7 @@ function os2web_menus_block_view($delta) {
 
         if ($menu['minipanel'] === 'none') {
           $mini_panel = NULL;
+          $menu['minipanel'] = '';
         }
         else {
           $mini_panel = panels_mini_block_view($menu['minipanel']);
@@ -264,12 +265,12 @@ function os2web_menus_block_view($delta) {
 
         $mini_panel_content = ($mini_panel !== NULL) ? '<div class="megamenu-panel" style="display:none">' . $mini_panel['content'] . '</div>' : '';
 
-        $content .= '<div class="megamenu ' . $menu['minipanel'] . ' ' . $pos . '">' . $title .
+        $content .= '<li class="megamenu ' . $menu['minipanel'] . ' ' . $pos . '">' . $title .
                      $mini_panel_content .
-                    '</div>';
+                    '</li>';
         $i++;
       }
-
+      $content .= '</ul>';
       $block['subject'] = '';
       $block['content'] = $content;
       break;
