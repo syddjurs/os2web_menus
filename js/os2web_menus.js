@@ -20,7 +20,6 @@ Drupal.behaviors.os2web_menus = {
     jQuery('.megamenu').each(function(){
       var offset = -(jQuery(this).position().left);
       jQuery(this).find('.megamenu-panel').css({left: offset});
-    })
-
+    });
   }
 };

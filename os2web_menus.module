@@ -32,7 +32,6 @@ function os2web_menus_menu() {
     'access callback' => TRUE,
   );
 
-
   return $items;
 }
 
